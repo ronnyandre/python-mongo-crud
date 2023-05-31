@@ -66,3 +66,20 @@ def update_note(noteId: str, payload: schemas.UpdateNoteSchema):
         "status": "success",
         "note": noteEntity(update_note)
     }
+
+# [...] Get a single record
+@router.get("/{noteId}", response_model=schemas.NoteResponse)
+def get_note(noteId: str):
+    if not ObjectId.is_valid(noteId):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"Invalid ID {noteId}")
+    note = Note.find_one({"_id": ObjectId(noteId)})
+
+    if not note:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"No note with this ID {noteId}")
+    
+    return {
+        "status": "success",
+        "note": noteEntity(note)
+    }
