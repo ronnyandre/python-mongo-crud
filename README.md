@@ -5,6 +5,7 @@ This repository contains a full example on how to locally run MongoDB in a Docke
 Clone the repository, create a virtual environment and install dependencies. Start Docker containers and run uvicorn server.
 
 Clone the repository:
+
 ```
 $ git clone https://github.com/ronnyandre/python-mongo-crud
 ```
@@ -21,6 +22,12 @@ Install Python packages:
 
 ```
 $ pip install -r requirements.txt
+```
+
+Copy the `.env.sample` file, change the values to your liking and save it as `.env`:
+
+```
+$ cp .env.sample .env
 ```
 
 Start the MongoDB Docker container:
