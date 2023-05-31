@@ -55,3 +55,63 @@ def create_task(payload: schemas.TaskBaseSchema):
     except:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail=f"Task could not be created")
+
+# [...] Update a record
+@router.patch("/{taskId}", response_model=schemas.TaskResponse)
+def update_task(taskId: str, payload: schemas.UpdateTaskSchema):
+
+    # Check if ID exists
+    check_if_id_exists(taskId)
+
+    # Convert to dictionary and update datetime
+    task_dict = payload.dict(exclude_none=True)
+    task_dict["updatedAt"] = datetime.utcnow()
+    
+    # Update in database
+    updated_task = Task.find_one_and_update(
+        {"_id": ObjectId(taskId)},
+        {"$set": task_dict},
+        return_document=ReturnDocument.AFTER
+    )
+
+    if not updated_task:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Task with ID {taskId} does not exist")
+    
+    return {
+        "status": "success",
+        "task": taskEntity(updated_task)
+    }
+
+# [...] Get a single record
+@router.get("/{taskId}", response_model=schemas.TaskResponse)
+def get_task(taskId: str):
+
+    # Check if ID exists
+    check_if_id_exists(taskId)
+
+    task = Task.find_one({"_id": ObjectId(taskId)})
+
+    if not task:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Task with ID {taskId} does not exist")
+    
+    return {
+        "status": "success",
+        "task": taskEntity(task)
+    }
+
+# [...] Delete a record
+@router.delete("/{taskId}")
+def delete_task(taskId: str):
+    
+    # Check if ID exists
+    check_if_id_exists(taskId)
+
+    task = Task.find_one_and_delete({"_id": ObjectId(taskId)})
+
+    if not task:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Task with ID {taskId} does not exist")
+    
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
