@@ -8,6 +8,11 @@ from bson.objectid import ObjectId
 
 router = APIRouter()
 
+def check_if_id_exists(id: str):
+     if not ObjectId.is_valid(id):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"Invalid ID: {id}")
+
 # [...] Get 10 first records
 @router.get("/", response_model=schemas.ListNoteResponse)
 def get_notes(limit: int = 10, page: int = 1, search: str = ""):
@@ -51,17 +56,19 @@ def create_note(payload: schemas.NoteBaseSchema):
 # [...] Update a record
 @router.patch("/{noteId}", response_model=schemas.NoteResponse)
 def update_note(noteId: str, payload: schemas.UpdateNoteSchema):
-    if not ObjectId.is_valid(noteId):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail=f"Invalid id {noteId}")
+
+    check_if_id_exists(noteId)
+
     updated_note = Note.find_one_and_update(
         {"_id": ObjectId(noteId)},
         {"$set": payload.dict(exclude_none=True)},
         return_document=ReturnDocument.AFTER
     )
+
     if not updated_note:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"No note with ID {noteId}")
+    
     return {
         "status": "success",
         "note": noteEntity(update_note)
@@ -70,9 +77,9 @@ def update_note(noteId: str, payload: schemas.UpdateNoteSchema):
 # [...] Get a single record
 @router.get("/{noteId}", response_model=schemas.NoteResponse)
 def get_note(noteId: str):
-    if not ObjectId.is_valid(noteId):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail=f"Invalid ID {noteId}")
+
+    check_if_id_exists(noteId)
+
     note = Note.find_one({"_id": ObjectId(noteId)})
 
     if not note:
@@ -83,3 +90,17 @@ def get_note(noteId: str):
         "status": "success",
         "note": noteEntity(note)
     }
+
+# [...] Delete a record
+@router.delete("/{noteId}")
+def delete_note(noteId: str):
+    
+    check_if_id_exists(noteId)
+
+    note = Note.find_one_and_delete({"_id": ObjectId(noteId)})
+
+    if not note:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"No note with ID {noteId}")
+    
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
