@@ -1,4 +1,4 @@
-from app import note
+from app import note, task
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -20,6 +20,7 @@ app.add_middleware(
 )
 
 app.include_router(note.router, tags=["Notes"], prefix=f"/api/{api_version}/notes")
+app.include_router(task.router, tags=["Tasks"], prefix=f"/api/{api_version}/tasks")
 
 @app.get(f"/api/{api_version}/healthcheck")
 def healthcheck():
